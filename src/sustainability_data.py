@@ -347,6 +347,12 @@ class SustainabilityDataProcessor:
                 )
             ]
             
+            # Count bus stops specifically
+            bus_stops = [
+                node for node in osm_data['elements']
+                if 'tags' in node and node['tags'].get('highway') == 'bus_stop'
+            ]
+            
             # Process green spaces - look for both nodes and ways
             green_spaces = [
                 element for element in osm_data['elements']
@@ -366,6 +372,7 @@ class SustainabilityDataProcessor:
                 },
                 'sustainable_transport': {
                     'count': len(transport_facilities),
+                    'bus_stops': len(bus_stops),
                     'details': [facility.get('tags', {}).get('name', 'Unnamed transport facility') 
                               for facility in transport_facilities[:5]]  # Show up to 5 named facilities
                 }
@@ -392,6 +399,9 @@ class SustainabilityDataProcessor:
             
             # Calculate final sustainability score
             metrics['sustainability_score'] = float(self.calculate_sustainability_score(metrics))
+            
+            print(f"Total transport facilities: {len(transport_facilities)}")
+            print(f"Total bus stops: {len(bus_stops)}")
             
             return metrics
             

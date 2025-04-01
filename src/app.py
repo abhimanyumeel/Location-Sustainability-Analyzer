@@ -482,9 +482,11 @@ def main():
                             <div style='background-color: #2C2C2C; padding: 1rem; border-radius: 10px; text-align: center; margin-bottom: 1rem;'>
                                 <p style='color: #888; margin: 0;'>Transport</p>
                                 <h4 style='color: #fff; margin: 0.5rem 0;'>{:.1f}/10</h4>
+                                <p style='color: #888; margin: 0;'>Facilities: {}</p>
+                                <p style='color: #888; margin: 0;'>Bus Stops: {}</p>
                                 <p style='color: #888; margin: 0;'>{}</p>
                             </div>
-                        """.format(min(10, metrics['osm_metrics']['sustainable_transport']['count'] * 1.5), get_rating(min(10, metrics['osm_metrics']['sustainable_transport']['count'] * 1.5))), unsafe_allow_html=True)
+                        """.format(min(10, metrics['osm_metrics']['sustainable_transport']['count'] * 1.5), metrics['osm_metrics']['sustainable_transport']['count'], metrics['osm_metrics']['sustainable_transport']['bus_stops'], get_rating(min(10, metrics['osm_metrics']['sustainable_transport']['count'] * 1.5))), unsafe_allow_html=True)
 
                         # Green Space
                         st.markdown("""
