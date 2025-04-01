@@ -229,6 +229,20 @@ def get_sustainability_metrics(lat, lon, address):
         print(f"Error details: {str(e)}")  # Debug log
         return None
 
+def get_rating(score):
+    if score >= 9:
+        return "Excellent"
+    elif score >= 7:
+        return "Very Good"
+    elif score >= 5:
+        return "Good"
+    elif score >= 3:
+        return "Moderate"
+    elif score >= 1:
+        return "Poor"
+    else:
+        return "Very Poor"
+
 def main():
     # Sidebar
     with st.sidebar:
@@ -433,9 +447,12 @@ def main():
                                     <h2 style='color: #138808; margin: 0; font-size: 2.5rem;'>
                                         {:.1f}/10
                                     </h2>
+                                    <p style='color: #888; margin: 0.5rem 0; font-size: 1.1rem;'>
+                                        {}
+                                    </p>
                                 </div>
                             </div>
-                        """.format(metrics['sustainability_score']), unsafe_allow_html=True)
+                        """.format(metrics['sustainability_score'], get_rating(metrics['sustainability_score'])), unsafe_allow_html=True)
 
                     with sustain_col2:
                         # Individual Metrics
@@ -451,43 +468,48 @@ def main():
 
                         # Air Quality
                         st.markdown("""
-                            <div style='background-color: #2C2C2C; padding: 1rem; border-radius: 10px; text-align: center;'>
+                            <div style='background-color: #2C2C2C; padding: 1rem; border-radius: 10px; text-align: center; margin-bottom: 1rem;'>
                                 <p style='color: #888; margin: 0;'>Air Quality</p>
                                 <h4 style='color: #fff; margin: 0.5rem 0;'>{:.1f}/10</h4>
+                                <p style='color: #888; margin: 0;'>{}</p>
                             </div>
-                        """.format(metrics['air_quality'] * 10), unsafe_allow_html=True)
+                        """.format(metrics['air_quality'] * 10, get_rating(metrics['air_quality'] * 10)), unsafe_allow_html=True)
 
                         # Transport
                         st.markdown("""
-                            <div style='background-color: #2C2C2C; padding: 1rem; border-radius: 10px; text-align: center;'>
+                            <div style='background-color: #2C2C2C; padding: 1rem; border-radius: 10px; text-align: center; margin-bottom: 1rem;'>
                                 <p style='color: #888; margin: 0;'>Transport</p>
                                 <h4 style='color: #fff; margin: 0.5rem 0;'>{:.1f}/10</h4>
+                                <p style='color: #888; margin: 0;'>{}</p>
                             </div>
-                        """.format(min(10, metrics['osm_metrics']['sustainable_transport']['count'] * 1.5)), unsafe_allow_html=True)
+                        """.format(min(10, metrics['osm_metrics']['sustainable_transport']['count'] * 1.5), get_rating(min(10, metrics['osm_metrics']['sustainable_transport']['count'] * 1.5))), unsafe_allow_html=True)
 
                         # Green Space
                         st.markdown("""
-                            <div style='background-color: #2C2C2C; padding: 1rem; border-radius: 10px; text-align: center;'>
+                            <div style='background-color: #2C2C2C; padding: 1rem; border-radius: 10px; text-align: center; margin-bottom: 1rem;'>
                                 <p style='color: #888; margin: 0;'>Green Space</p>
                                 <h4 style='color: #fff; margin: 0.5rem 0;'>{:.1f}/10</h4>
+                                <p style='color: #888; margin: 0;'>{}</p>
                             </div>
-                        """.format(min(10, metrics['osm_metrics']['green_space']['count'] * 2)), unsafe_allow_html=True)
+                        """.format(min(10, metrics['osm_metrics']['green_space']['count'] * 2), get_rating(min(10, metrics['osm_metrics']['green_space']['count'] * 2))), unsafe_allow_html=True)
 
                         # Water
                         st.markdown("""
-                            <div style='background-color: #2C2C2C; padding: 1rem; border-radius: 10px; text-align: center;'>
+                            <div style='background-color: #2C2C2C; padding: 1rem; border-radius: 10px; text-align: center; margin-bottom: 1rem;'>
                                 <p style='color: #888; margin: 0;'>Water</p>
                                 <h4 style='color: #fff; margin: 0.5rem 0;'>{:.1f}/10</h4>
+                                <p style='color: #888; margin: 0;'>{}</p>
                             </div>
-                        """.format(metrics['water_availability'] * 10), unsafe_allow_html=True)
+                        """.format(metrics['water_availability'] * 10, get_rating(metrics['water_availability'] * 10)), unsafe_allow_html=True)
 
                         # Waste Management
                         st.markdown("""
-                            <div style='background-color: #2C2C2C; padding: 1rem; border-radius: 10px; text-align: center;'>
+                            <div style='background-color: #2C2C2C; padding: 1rem; border-radius: 10px; text-align: center; margin-bottom: 1rem;'>
                                 <p style='color: #888; margin: 0;'>Waste</p>
                                 <h4 style='color: #fff; margin: 0.5rem 0;'>{:.1f}/10</h4>
+                                <p style='color: #888; margin: 0;'>{}</p>
                             </div>
-                        """.format(metrics['waste_management'] * 10), unsafe_allow_html=True)
+                        """.format(metrics['waste_management'] * 10, get_rating(metrics['waste_management'] * 10)), unsafe_allow_html=True)
 
                         st.markdown("</div></div>", unsafe_allow_html=True)
 
