@@ -471,9 +471,11 @@ def main():
                             <div style='background-color: #2C2C2C; padding: 1rem; border-radius: 10px; text-align: center; margin-bottom: 1rem;'>
                                 <p style='color: #888; margin: 0;'>Air Quality</p>
                                 <h4 style='color: #fff; margin: 0.5rem 0;'>{:.1f}/10</h4>
+                                <p style='color: #888; margin: 0;'>AQI: {}</p>
+                                <p style='color: #888; margin: 0;'>PM2.5: {} µg/m³</p>
                                 <p style='color: #888; margin: 0;'>{}</p>
                             </div>
-                        """.format(metrics['air_quality'] * 10, get_rating(metrics['air_quality'] * 10)), unsafe_allow_html=True)
+                        """.format(metrics['air_quality'] * 10, metrics['air_quality_details']['aqi'], metrics['air_quality_details']['pm25'], get_rating(metrics['air_quality'] * 10)), unsafe_allow_html=True)
 
                         # Transport
                         st.markdown("""
