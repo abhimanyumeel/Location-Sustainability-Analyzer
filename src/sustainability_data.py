@@ -292,21 +292,73 @@ class SustainabilityDataProcessor:
             print(f"Error calculating waste management score: {e}")
             return 0.0
 
-    def calculate_sustainability_score(self, metrics: Dict) -> float:
+    def calculate_economic_sustainability(self, price_in_lakhs: float, yearly_income_in_lakhs: float) -> Dict:
         """
-        Calculate overall sustainability score with improved normalization
+        Calculate economic sustainability based on price-to-income ratio and affordability metrics
         """
-        # Define base scores for each component (out of 10)
-        transport_score = min(10, metrics['osm_metrics']['sustainable_transport']['count'] * 1.5)  # Each facility worth 1.5 points
-        green_space_score = min(10, metrics['osm_metrics']['green_space']['count'] * 2)  # Each space worth 2 points
-        
-        # Convert other metrics to 10-point scale
+        try:
+            # Calculate price-to-income ratio (lower is better)
+            price_to_income_ratio = price_in_lakhs / yearly_income_in_lakhs
+            
+            # Calculate affordability score (0-10 scale)
+            # A ratio of 5 or less is considered good (score > 7)
+            # A ratio of 10 or more is considered poor (score < 4)
+            if price_to_income_ratio <= 5:
+                affordability_score = 10 - (price_to_income_ratio * 0.6)
+            else:
+                affordability_score = max(1, 7 - ((price_to_income_ratio - 5) * 0.6))
+                
+            # Calculate monthly EMI (assuming 20-year loan with 8.5% interest)
+            loan_amount = price_in_lakhs * 100000  # Convert to rupees
+            interest_rate = 8.5 / 12 / 100  # Monthly interest rate
+            loan_term_months = 20 * 12
+            emi = (loan_amount * interest_rate * (1 + interest_rate)**loan_term_months) / ((1 + interest_rate)**loan_term_months - 1)
+            
+            # Calculate EMI to monthly income ratio (should be <= 0.5 for good score)
+            monthly_income = (yearly_income_in_lakhs * 100000) / 12
+            emi_to_income_ratio = emi / monthly_income
+            
+            # Calculate EMI affordability score (0-10 scale)
+            if emi_to_income_ratio <= 0.3:
+                emi_score = 10
+            elif emi_to_income_ratio <= 0.5:
+                emi_score = 7
+            else:
+                emi_score = max(1, 7 - ((emi_to_income_ratio - 0.5) * 10))
+                
+            return {
+                'price_to_income_ratio': float(price_to_income_ratio),
+                'affordability_score': float(affordability_score),
+                'emi_monthly': float(emi),
+                'emi_to_income_ratio': float(emi_to_income_ratio),
+                'emi_affordability_score': float(emi_score),
+                'economic_sustainability_score': float((affordability_score + emi_score) / 2)
+            }
+            
+        except Exception as e:
+            print(f"Error calculating economic sustainability: {e}")
+            return {
+                'price_to_income_ratio': 0.0,
+                'affordability_score': 0.0,
+                'emi_monthly': 0.0,
+                'emi_to_income_ratio': 0.0,
+                'emi_affordability_score': 0.0,
+                'economic_sustainability_score': 0.0
+            }
+
+    def calculate_sustainability_score(self, metrics: Dict, economic_metrics: Dict = None) -> float:
+        """
+        Calculate overall sustainability score combining environmental and economic factors
+        """
+        # Environmental scores (out of 10)
+        transport_score = min(10, metrics['osm_metrics']['sustainable_transport']['count'] * 1.5)
+        green_space_score = min(10, metrics['osm_metrics']['green_space']['count'] * 2)
         air_quality_score = metrics['air_quality'] * 10
         water_score = metrics['water_availability'] * 10
         waste_score = metrics['waste_management'] * 10
         
-        # Calculate weighted average
-        weights = {
+        # Calculate environmental score with weights
+        env_weights = {
             'transport': 0.2,
             'green_space': 0.2,
             'air_quality': 0.2,
@@ -314,26 +366,35 @@ class SustainabilityDataProcessor:
             'waste': 0.2
         }
         
-        final_score = (
-            transport_score * weights['transport'] +
-            green_space_score * weights['green_space'] +
-            air_quality_score * weights['air_quality'] +
-            water_score * weights['water'] +
-            waste_score * weights['waste']
+        environmental_score = (
+            transport_score * env_weights['transport'] +
+            green_space_score * env_weights['green_space'] +
+            air_quality_score * env_weights['air_quality'] +
+            water_score * env_weights['water'] +
+            waste_score * env_weights['waste']
         )
         
-        # Apply mild penalties only for severe conditions
+        # Apply environmental penalties
         if metrics.get('air_quality_details', {}).get('aqi', 0) >= 4:
-            final_score *= 0.9
+            environmental_score *= 0.9
+        
+        # If economic metrics are provided, include them in final score
+        if economic_metrics:
+            economic_score = economic_metrics['economic_sustainability_score']
             
+            # Combined score (60% environmental, 40% economic)
+            final_score = (environmental_score * 0.6) + (economic_score * 0.4)
+        else:
+            final_score = environmental_score
+        
         return max(1, min(10, final_score))
 
-    def process_location(self, lat: float, lon: float, address: str) -> Dict:
+    def process_location(self, lat: float, lon: float, address: str, price_in_lakhs: float = None, yearly_income_in_lakhs: float = None) -> Dict:
         """
-        Process all sustainability data for a given location
+        Process all sustainability data for a given location, including economic factors if provided
         """
         try:
-            # Get OSM data using the new collector
+            # Get OSM data
             osm_data = self.fetch_osm_data(lat, lon)
             
             # Process transport facilities
@@ -397,8 +458,21 @@ class SustainabilityDataProcessor:
                 'osm_metrics': osm_metrics
             }
             
-            # Calculate final sustainability score
-            metrics['sustainability_score'] = float(self.calculate_sustainability_score(metrics))
+            # Add economic metrics if price and income are provided
+            if price_in_lakhs is not None and yearly_income_in_lakhs is not None:
+                economic_metrics = self.calculate_economic_sustainability(price_in_lakhs, yearly_income_in_lakhs)
+                metrics['economic_metrics'] = economic_metrics
+                
+                # Calculate combined sustainability score
+                metrics['sustainability_score'] = float(self.calculate_sustainability_score(metrics, economic_metrics))
+                
+                # Add affordability rating
+                metrics['affordability_rating'] = self.get_affordability_rating(economic_metrics['economic_sustainability_score'])
+            else:
+                # Calculate sustainability score without economic metrics
+                metrics['sustainability_score'] = float(self.calculate_sustainability_score(metrics))
+                metrics['economic_metrics'] = None
+                metrics['affordability_rating'] = 'Not Available'
             
             print(f"Total transport facilities: {len(transport_facilities)}")
             print(f"Total bus stops: {len(bus_stops)}")
@@ -407,15 +481,31 @@ class SustainabilityDataProcessor:
             
         except Exception as e:
             print(f"Error processing location {address}: {e}")
-            # Return default metrics in case of error
             return {
                 'air_quality': 0.0,
                 'air_quality_details': {'aqi': 0, 'pm25': 0, 'unit': 'µg/m³', 'last_updated': None, 'location': None},
                 'water_availability': 0.0,
                 'waste_management': 0.0,
                 'osm_metrics': {'green_space': {'count': 0}, 'sustainable_transport': {'count': 0}},
-                'sustainability_score': 0.0
+                'sustainability_score': 0.0,
+                'economic_metrics': None,
+                'affordability_rating': 'Not Available'
             }
+
+    def get_affordability_rating(self, economic_score: float) -> str:
+        """
+        Get affordability rating based on economic sustainability score
+        """
+        if economic_score >= 9:
+            return "Highly Affordable"
+        elif economic_score >= 7:
+            return "Affordable"
+        elif economic_score >= 5:
+            return "Moderately Affordable"
+        elif economic_score >= 3:
+            return "Expensive"
+        else:
+            return "Very Expensive"
 
 def main():
     # Test the processor
