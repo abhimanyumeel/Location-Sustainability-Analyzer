@@ -441,11 +441,10 @@ def main():
             if metrics:
                 # Display Results Header
                 st.markdown("""
-                    <div style='background-color: #1E1E1E; padding: 1rem; border-radius: 10px; margin: 2rem 0; 
-                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
-                        <h2 style='color: #FF9933; margin-bottom: 1rem; font-size: 1.8rem;'>
-                            📊 Comprehensive Analysis Results
-                        </h2>
+                    <div style='background-color: transparent; padding: 1rem; margin: 1rem 0;'>
+                        <div style='color: #FFFFFF; font-size: 1.8rem; font-weight: 600;'>
+                            Comprehensive Analysis Results
+                        </div>
                     </div>
                 """, unsafe_allow_html=True)
 
@@ -457,15 +456,14 @@ def main():
                     st.markdown(f"""
                     <div style='background-color: #1E1E1E; padding: 2rem; border-radius: 15px; 
                                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 1rem;'>
-                        <h3 style='color: #FF9933; margin: 0; font-size: 1.3rem; margin-bottom: 1rem;'>
+                        <div style='color: #FF9933; font-size: 1.3rem; margin-bottom: 1rem; text-align: center; font-weight: 600;'>
                             💰 Price Analysis
-                        </h3>
-                        <div style='background-color: #2C2C2C; padding: 1.5rem; border-radius: 10px; 
-                                    border-left: 5px solid #FF9933;'>
-                            <h2 style='color: #138808; margin: 0; font-size: 2.5rem; font-weight: bold;'>
+                        </div>
+                        <div style='background-color: #2C2C2C; padding: 1.5rem; border-radius: 10px;'>
+                            <div style='color: #FFFFFF; margin: 0; font-size: 2.5rem; font-weight: 500; text-align: center;'>
                                 ₹{prediction:.2f} Lakhs
-                            </h2>
-                            <p style='color: #888; margin: 0.5rem 0 0 0; font-size: 1.1rem;'>
+                            </div>
+                            <p style='color: #888; margin: 0.5rem 0 0 0; font-size: 1.1rem; text-align: center;'>
                                 ₹{price_per_sqft:.2f} per Sq.Ft
                             </p>
                         </div>
@@ -478,20 +476,20 @@ def main():
                         st.markdown(f"""
                         <div style='background-color: #1E1E1E; padding: 2rem; border-radius: 15px; 
                                     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 1rem;'>
-                            <h3 style='color: #FF9933; margin: 0; font-size: 1.3rem; margin-bottom: 1rem;'>
+                            <div style='color: #FF9933; font-size: 1.3rem; margin-bottom: 1rem; text-align: center; font-weight: 600;'>
                                 💸 Affordability Analysis
-                            </h3>
+                            </div>
                             <div style='background-color: #2C2C2C; padding: 1.5rem; border-radius: 10px; text-align: center;'>
-                                <h2 style='color: #138808; margin: 0; font-size: 2rem;'>
+                                <div style='color: #FFFFFF; margin: 0; font-size: 2rem; text-align: center; font-weight: 500;'>
                                     {metrics['affordability_rating']}
-                                </h2>
-                                <p style='color: #888; margin: 0.5rem 0;'>
+                                </div>
+                                <p style='color: #888; margin: 1rem 0 0.5rem 0; text-align: center;'>
                                     Price to Income Ratio: {metrics['economic_metrics']['price_to_income_ratio']:.1f}
                                 </p>
-                                <p style='color: #888; margin: 0.5rem 0;'>
+                                <p style='color: #888; margin: 0.5rem 0; text-align: center;'>
                                     Monthly EMI: ₹{metrics['economic_metrics']['emi_monthly']:,.2f}
                                 </p>
-                                <p style='color: #888; margin: 0.5rem 0;'>
+                                <p style='color: #888; margin: 0.5rem 0; text-align: center;'>
                                     EMI to Income: {metrics['economic_metrics']['emi_to_income_ratio']*100:.1f}%
                                 </p>
                             </div>
@@ -505,13 +503,13 @@ def main():
                     st.markdown(f"""
                     <div style='background-color: #1E1E1E; padding: 2rem; border-radius: 15px; 
                                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 1rem;'>
-                        <h3 style='color: #FF9933; margin: 0; font-size: 1.3rem; margin-bottom: 1rem;'>
+                        <div style='color: #FF9933; font-size: 1.3rem; margin-bottom: 1rem; text-align: center; font-weight: 600;'>
                             🌱 Overall Sustainability
-                        </h3>
+                        </div>
                         <div style='background-color: #2C2C2C; padding: 1.5rem; border-radius: 10px; text-align: center;'>
-                            <h2 style='color: #138808; margin: 0; font-size: 2.5rem;'>
+                            <div style='color: #FFFFFF; margin: 0; font-size: 2.5rem; font-weight: 500;'>
                                 {metrics['sustainability_score']:.1f}/10
-                            </h2>
+                            </div>
                             <p style='color: #888; margin: 0.5rem 0; font-size: 1.1rem;'>
                                 {get_rating(metrics['sustainability_score'])}
                             </p>
@@ -525,11 +523,10 @@ def main():
                 with detail_col1:
                     # Environmental Metrics
                     st.markdown("""
-                        <div style='background-color: #1E1E1E; padding: 1rem; border-radius: 10px;
-                                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
-                            <h3 style='color: #FF9933; margin: 0; font-size: 1.3rem;'>
+                        <div style='background-color: transparent; padding: 1rem;'>
+                            <div style='color: #FF9933; font-size: 1.3rem; margin-bottom: 1rem; font-weight: 600;'>
                                 🌍 Environmental Metrics
-                            </h3>
+                            </div>
                             <div style='display: grid; grid-template-columns: repeat(2, 1fr); 
                                     gap: 1rem; margin-top: 1rem;'>
                     """, unsafe_allow_html=True)
@@ -545,8 +542,8 @@ def main():
                     for name, score, details in metrics_display:
                         st.markdown(f"""
                             <div style='background-color: #2C2C2C; padding: 1rem; border-radius: 10px; text-align: center; margin-bottom: 1rem;'>
-                                <p style='color: #888; margin: 0;'>{name}</p>
-                                <h4 style='color: #fff; margin: 0.5rem 0;'>{score:.1f}/10</h4>
+                                <p style='color: #888; margin: 0; font-size: 1.2rem; font-weight: 500;'>{name}</p>
+                                <div style='color: #fff; margin: 0.5rem 0; font-size: 1.2rem; font-weight: 500;'>{score:.1f}/10</div>
                                 <p style='color: #888; margin: 0;'>{details}</p>
                                 <p style='color: #888; margin: 0;'>{get_rating(score)}</p>
                             </div>
@@ -558,9 +555,9 @@ def main():
                     # Price Distribution Plot
                     fig = create_price_distribution(prediction, area_prices)
                     fig.update_layout(
-                        template="plotly_dark",
-                        plot_bgcolor='#1E1E1E',
-                        paper_bgcolor='#1E1E1E',
+                        template="plotly_white",  # Other options: "plotly_white", "plotly_dark", "seaborn", "ggplot2", "simple_white"
+                        plot_bgcolor='rgba(0, 0, 0, 0)',
+                        paper_bgcolor='rgba(0, 0, 0, 0)',
                         title_font_size=20,
                         title_font_color='#FF9933',
                         showlegend=True,
