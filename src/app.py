@@ -26,32 +26,68 @@ st.set_page_config(
 # Enhanced Custom CSS
 st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    * {
+        font-family: 'Poppins', sans-serif;
+    }
+    
     .main {
         padding: 2rem;
     }
+    
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Poppins', sans-serif !important;
+        font-weight: 600;
+    }
+    
     .stButton>button {
         width: 100%;
-        background-color: #FF9933;  /* Indian flag color */
+        background-color: #FF9933;
         color: white;
         border: none;
         padding: 15px 24px;
         border-radius: 8px;
         cursor: pointer;
-        font-weight: bold;
+        font-weight: 500;
+        font-family: 'Poppins', sans-serif !important;
         transition: all 0.3s ease;
     }
+    
     .stButton>button:hover {
-        background-color: #138808;  /* Indian flag green */
+        background-color: #138808;
         transform: translateY(-2px);
     }
+    
     .stSelectbox, .stSlider, .stNumberInput {
         margin-bottom: 1.5rem;
+        font-family: 'Poppins', sans-serif !important;
     }
+    
     .success {
         color: #138808;
+        font-family: 'Poppins', sans-serif !important;
     }
+    
     .warning {
         color: #FF9933;
+        font-family: 'Poppins', sans-serif !important;
+    }
+
+    div[data-testid="stMarkdown"] {
+        font-family: 'Poppins', sans-serif !important;
+    }
+
+    .stTextInput>div>div>input {
+        font-family: 'Poppins', sans-serif !important;
+    }
+
+    .stSelectbox>div>div>div {
+        font-family: 'Poppins', sans-serif !important;
+    }
+
+    .stNumberInput>div>div>input {
+        font-family: 'Poppins', sans-serif !important;
     }
     </style>
     """, unsafe_allow_html=True)
