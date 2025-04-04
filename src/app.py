@@ -17,7 +17,7 @@ train_df = load_data()
 
 # Set page config
 st.set_page_config(
-    page_title="Indian Housing Price Predictor",
+    page_title="Location Sustainability Analyzer",
     page_icon="🏠",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -246,7 +246,7 @@ def get_rating(score):
 def main():
     # Sidebar
     with st.sidebar:
-        st.title("🏠 Indian Housing Price Predictor")
+        st.title("🏠 Location Sustainability Analyzer")
         st.write("Predict house prices and calculate sustainability scores")
         st.markdown("---")
         st.markdown("""
@@ -261,7 +261,7 @@ def main():
         st.write("This app provides comprehensive property analysis including price prediction, environmental sustainability, and economic affordability.")
 
     # Main content
-    st.title("Indian Housing Price Predictor")
+    st.title("Location Sustainability Analyzer")
     st.write("Get comprehensive property analysis including price, sustainability, and affordability")
 
     # Create three columns for input
