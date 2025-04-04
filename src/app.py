@@ -319,6 +319,11 @@ def main():
         except (ValueError, TypeError) as e:
             latitude, longitude = 20.5937, 78.9629
 
+        # Map section moved here
+        
+        m = create_map(latitude, longitude, address)
+        folium_static(m, width=800, height=400)
+
     with col2:
         st.subheader("🏠 Property Details")
         bhk_no = st.number_input("Number of BHK", min_value=1, max_value=10, value=2)
@@ -333,21 +338,6 @@ def main():
         rera = st.selectbox("RERA Approved?", [0, 1], format_func=lambda x: "Yes" if x == 1 else "No")
         ready_to_move = st.selectbox("Ready to Move?", [0, 1], format_func=lambda x: "Yes" if x == 1 else "No")
         resale = st.selectbox("Resale?", [0, 1], format_func=lambda x: "Yes" if x == 1 else "No")
-
-    # Map section
-    st.markdown("""
-        <div style='background-color: #1E1E1E; padding: 0.8rem 1.2rem; border-radius: 8px; margin: 1rem 0; 
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); display: flex; align-items: center;'>
-            <h4 style='color: #FF9933; margin: 0; font-size: 1.1rem;'>📍 Location Map</h4>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    map_container = st.container()
-    with map_container:
-        _, col_map, _ = st.columns([0.1, 0.8, 0.1])
-        with col_map:
-            m = create_map(latitude, longitude, address)
-            folium_static(m, width=680, height=450)
 
     # Single button for combined analysis
     if st.button("Calculate Price & Sustainability 🎯", key="analyze_button"):
