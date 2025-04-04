@@ -44,7 +44,7 @@ st.markdown("""
     .stButton>button {
         width: 100%;
         background-color: #FF9933;
-        color: white;
+        color: white !important;
         border: none;
         padding: 15px 24px;
         border-radius: 8px;
@@ -55,8 +55,8 @@ st.markdown("""
     }
     
     .stButton>button:hover {
-        background-color: #138808;
-        transform: translateY(-2px);
+        background-color: #E67E22;  /* Darker shade of orange */
+        color: white !important;
     }
     
     .stSelectbox, .stSlider, .stNumberInput {
@@ -88,6 +88,55 @@ st.markdown("""
 
     .stNumberInput>div>div>input {
         font-family: 'Poppins', sans-serif !important;
+    }
+
+    /* Loading overlay styles */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(5px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .loading-spinner-container {
+        background: #1E1E1E;
+        padding: 2rem 3rem;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        text-align: center;
+    }
+
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid rgba(255, 153, 51, 0.2);
+        border-radius: 50%;
+        border-top-color: #FF9933;
+        margin: 0 auto 1rem auto;
+        animation: spin 1s linear infinite;
+    }
+
+    .loading-text {
+        color: #ffffff;
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Hide default spinner */
+    .stSpinner {
+        display: none !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -279,6 +328,18 @@ def get_rating(score):
     else:
         return "Very Poor"
 
+def show_loading_overlay():
+    loading_placeholder = st.empty()
+    loading_placeholder.markdown("""
+        <div class="loading-overlay">
+            <div class="loading-spinner-container">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">Analyzing location sustainability...</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    return loading_placeholder
+
 def main():
     # Sidebar
     with st.sidebar:
@@ -340,182 +401,185 @@ def main():
         resale = st.selectbox("Resale?", [0, 1], format_func=lambda x: "Yes" if x == 1 else "No")
 
     # Single button for combined analysis
-    if st.button("Calculate Price & Sustainability 🎯", key="analyze_button"):
-        with st.spinner("Analyzing property..."):
-            try:
-                # Create input DataFrame for price prediction
-                input_data = pd.DataFrame({
-                    'POSTED_BY': [posted_by],
-                    'UNDER_CONSTRUCTION': [under_construction],
-                    'RERA': [rera],
-                    'BHK_NO.': [bhk_no],
-                    'BHK_OR_RK': [bhk_or_rk],
-                    'SQUARE_FT': [square_ft],
-                    'READY_TO_MOVE': [ready_to_move],
-                    'RESALE': [resale],
-                    'ADDRESS': [address],
-                    'LONGITUDE': [longitude],
-                    'LATITUDE': [latitude]
-                })
+    if st.button("Calculate Price & Sustainability", key="analyze_button"):
+        loading_overlay = show_loading_overlay()
+        try:
+            # Create input DataFrame for price prediction
+            input_data = pd.DataFrame({
+                'POSTED_BY': [posted_by],
+                'UNDER_CONSTRUCTION': [under_construction],
+                'RERA': [rera],
+                'BHK_NO.': [bhk_no],
+                'BHK_OR_RK': [bhk_or_rk],
+                'SQUARE_FT': [square_ft],
+                'READY_TO_MOVE': [ready_to_move],
+                'RESALE': [resale],
+                'ADDRESS': [address],
+                'LONGITUDE': [longitude],
+                'LATITUDE': [latitude]
+            })
 
-                # Load model and make prediction
-                model = load_trained_model()
-                prediction = model.predict(input_data)[0]
+            # Load model and make prediction
+            model = load_trained_model()
+            prediction = model.predict(input_data)[0]
 
-                # Get area statistics
-                area_prices = train_df[train_df['ADDRESS'] == address]['TARGET(PRICE_IN_LACS)']
-                avg_price = area_prices.mean()
-                min_price = area_prices.min()
-                max_price = area_prices.max()
-                price_per_sqft = (prediction*100000/square_ft)
+            # Get area statistics
+            area_prices = train_df[train_df['ADDRESS'] == address]['TARGET(PRICE_IN_LACS)']
+            avg_price = area_prices.mean()
+            min_price = area_prices.min()
+            max_price = area_prices.max()
+            price_per_sqft = (prediction*100000/square_ft)
 
-                # Calculate sustainability metrics with economic factors
-                processor = load_sustainability_processor()
-                yearly_income_lakhs = yearly_income / 100000  # Convert to lakhs
-                metrics = processor.process_location(latitude, longitude, address, prediction, yearly_income_lakhs)
+            # Calculate sustainability metrics
+            processor = load_sustainability_processor()
+            yearly_income_lakhs = yearly_income / 100000
+            metrics = processor.process_location(latitude, longitude, address, prediction, yearly_income_lakhs)
 
-                if metrics:
-                    # Display Results Header
-                    st.markdown("""
-                        <div style='background-color: #1E1E1E; padding: 1rem; border-radius: 10px; margin: 2rem 0; 
-                                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
-                            <h2 style='color: #FF9933; margin-bottom: 1rem; font-size: 1.8rem;'>
-                                📊 Comprehensive Analysis Results
+            # Remove loading overlay
+            loading_overlay.empty()
+
+            if metrics:
+                # Display Results Header
+                st.markdown("""
+                    <div style='background-color: #1E1E1E; padding: 1rem; border-radius: 10px; margin: 2rem 0; 
+                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+                        <h2 style='color: #FF9933; margin-bottom: 1rem; font-size: 1.8rem;'>
+                            📊 Comprehensive Analysis Results
+                        </h2>
+                    </div>
+                """, unsafe_allow_html=True)
+
+                # Create three columns for results
+                result_col1, result_col2, result_col3 = st.columns([1, 1, 1])
+
+                with result_col1:
+                    # Price Prediction Card
+                    st.markdown(f"""
+                    <div style='background-color: #1E1E1E; padding: 2rem; border-radius: 15px; 
+                                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 1rem;'>
+                        <h3 style='color: #FF9933; margin: 0; font-size: 1.3rem; margin-bottom: 1rem;'>
+                            💰 Price Analysis
+                        </h3>
+                        <div style='background-color: #2C2C2C; padding: 1.5rem; border-radius: 10px; 
+                                    border-left: 5px solid #FF9933;'>
+                            <h2 style='color: #138808; margin: 0; font-size: 2.5rem; font-weight: bold;'>
+                                ₹{prediction:.2f} Lakhs
                             </h2>
+                            <p style='color: #888; margin: 0.5rem 0 0 0; font-size: 1.1rem;'>
+                                ₹{price_per_sqft:.2f} per Sq.Ft
+                            </p>
                         </div>
+                    </div>
                     """, unsafe_allow_html=True)
 
-                    # Create three columns for results
-                    result_col1, result_col2, result_col3 = st.columns([1, 1, 1])
-
-                    with result_col1:
-                        # Price Prediction Card
+                with result_col2:
+                    # Economic Sustainability Card
+                    if metrics.get('economic_metrics'):
                         st.markdown(f"""
                         <div style='background-color: #1E1E1E; padding: 2rem; border-radius: 15px; 
                                     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 1rem;'>
                             <h3 style='color: #FF9933; margin: 0; font-size: 1.3rem; margin-bottom: 1rem;'>
-                                💰 Price Analysis
-                            </h3>
-                            <div style='background-color: #2C2C2C; padding: 1.5rem; border-radius: 10px; 
-                                        border-left: 5px solid #FF9933;'>
-                                <h2 style='color: #138808; margin: 0; font-size: 2.5rem; font-weight: bold;'>
-                                    ₹{prediction:.2f} Lakhs
-                                </h2>
-                                <p style='color: #888; margin: 0.5rem 0 0 0; font-size: 1.1rem;'>
-                                    ₹{price_per_sqft:.2f} per Sq.Ft
-                                </p>
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
-
-                    with result_col2:
-                        # Economic Sustainability Card
-                        if metrics.get('economic_metrics'):
-                            st.markdown(f"""
-                            <div style='background-color: #1E1E1E; padding: 2rem; border-radius: 15px; 
-                                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 1rem;'>
-                                <h3 style='color: #FF9933; margin: 0; font-size: 1.3rem; margin-bottom: 1rem;'>
-                                    💸 Affordability Analysis
-                                </h3>
-                                <div style='background-color: #2C2C2C; padding: 1.5rem; border-radius: 10px; text-align: center;'>
-                                    <h2 style='color: #138808; margin: 0; font-size: 2rem;'>
-                                        {metrics['affordability_rating']}
-                                    </h2>
-                                    <p style='color: #888; margin: 0.5rem 0;'>
-                                        Price to Income Ratio: {metrics['economic_metrics']['price_to_income_ratio']:.1f}
-                                    </p>
-                                    <p style='color: #888; margin: 0.5rem 0;'>
-                                        Monthly EMI: ₹{metrics['economic_metrics']['emi_monthly']:,.2f}
-                                    </p>
-                                    <p style='color: #888; margin: 0.5rem 0;'>
-                                        EMI to Income: {metrics['economic_metrics']['emi_to_income_ratio']*100:.1f}%
-                                    </p>
-                                </div>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        else:
-                            st.warning("Economic metrics not available")
-
-                    with result_col3:
-                        # Overall Sustainability Score
-                        st.markdown(f"""
-                        <div style='background-color: #1E1E1E; padding: 2rem; border-radius: 15px; 
-                                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 1rem;'>
-                            <h3 style='color: #FF9933; margin: 0; font-size: 1.3rem; margin-bottom: 1rem;'>
-                                🌱 Overall Sustainability
+                                💸 Affordability Analysis
                             </h3>
                             <div style='background-color: #2C2C2C; padding: 1.5rem; border-radius: 10px; text-align: center;'>
-                                <h2 style='color: #138808; margin: 0; font-size: 2.5rem;'>
-                                    {metrics['sustainability_score']:.1f}/10
+                                <h2 style='color: #138808; margin: 0; font-size: 2rem;'>
+                                    {metrics['affordability_rating']}
                                 </h2>
-                                <p style='color: #888; margin: 0.5rem 0; font-size: 1.1rem;'>
-                                    {get_rating(metrics['sustainability_score'])}
+                                <p style='color: #888; margin: 0.5rem 0;'>
+                                    Price to Income Ratio: {metrics['economic_metrics']['price_to_income_ratio']:.1f}
+                                </p>
+                                <p style='color: #888; margin: 0.5rem 0;'>
+                                    Monthly EMI: ₹{metrics['economic_metrics']['emi_monthly']:,.2f}
+                                </p>
+                                <p style='color: #888; margin: 0.5rem 0;'>
+                                    EMI to Income: {metrics['economic_metrics']['emi_to_income_ratio']*100:.1f}%
                                 </p>
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
+                    else:
+                        st.warning("Economic metrics not available")
 
-                    # Create two columns for detailed metrics
-                    detail_col1, detail_col2 = st.columns(2)
+                with result_col3:
+                    # Overall Sustainability Score
+                    st.markdown(f"""
+                    <div style='background-color: #1E1E1E; padding: 2rem; border-radius: 15px; 
+                                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 1rem;'>
+                        <h3 style='color: #FF9933; margin: 0; font-size: 1.3rem; margin-bottom: 1rem;'>
+                            🌱 Overall Sustainability
+                        </h3>
+                        <div style='background-color: #2C2C2C; padding: 1.5rem; border-radius: 10px; text-align: center;'>
+                            <h2 style='color: #138808; margin: 0; font-size: 2.5rem;'>
+                                {metrics['sustainability_score']:.1f}/10
+                            </h2>
+                            <p style='color: #888; margin: 0.5rem 0; font-size: 1.1rem;'>
+                                {get_rating(metrics['sustainability_score'])}
+                            </p>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-                    with detail_col1:
-                        # Environmental Metrics
-                        st.markdown("""
-                            <div style='background-color: #1E1E1E; padding: 1rem; border-radius: 10px;
-                                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
-                                <h3 style='color: #FF9933; margin: 0; font-size: 1.3rem;'>
-                                    🌍 Environmental Metrics
-                                </h3>
-                                <div style='display: grid; grid-template-columns: repeat(2, 1fr); 
-                                        gap: 1rem; margin-top: 1rem;'>
+                # Create two columns for detailed metrics
+                detail_col1, detail_col2 = st.columns(2)
+
+                with detail_col1:
+                    # Environmental Metrics
+                    st.markdown("""
+                        <div style='background-color: #1E1E1E; padding: 1rem; border-radius: 10px;
+                                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+                            <h3 style='color: #FF9933; margin: 0; font-size: 1.3rem;'>
+                                🌍 Environmental Metrics
+                            </h3>
+                            <div style='display: grid; grid-template-columns: repeat(2, 1fr); 
+                                    gap: 1rem; margin-top: 1rem;'>
+                    """, unsafe_allow_html=True)
+
+                    metrics_display = [
+                        ('Air Quality', metrics['air_quality'] * 10, f"AQI: {metrics['air_quality_details']['aqi']}, PM2.5: {metrics['air_quality_details']['pm25']} µg/m³"),
+                        ('Transport', min(10, metrics['osm_metrics']['sustainable_transport']['count'] * 1.5), f"Facilities: {metrics['osm_metrics']['sustainable_transport']['count']}, Bus Stops: {metrics['osm_metrics']['sustainable_transport']['bus_stops']}"),
+                        ('Green Space', min(10, metrics['osm_metrics']['green_space']['count'] * 2), f"Parks: {metrics['osm_metrics']['green_space']['count']}"),
+                        ('Water', metrics['water_availability'] * 10, ''),
+                        ('Waste', metrics['waste_management'] * 10, '')
+                    ]
+
+                    for name, score, details in metrics_display:
+                        st.markdown(f"""
+                            <div style='background-color: #2C2C2C; padding: 1rem; border-radius: 10px; text-align: center; margin-bottom: 1rem;'>
+                                <p style='color: #888; margin: 0;'>{name}</p>
+                                <h4 style='color: #fff; margin: 0.5rem 0;'>{score:.1f}/10</h4>
+                                <p style='color: #888; margin: 0;'>{details}</p>
+                                <p style='color: #888; margin: 0;'>{get_rating(score)}</p>
+                            </div>
                         """, unsafe_allow_html=True)
 
-                        # Display environmental metrics (Air Quality, Transport, etc.)
-                        metrics_display = [
-                            ('Air Quality', metrics['air_quality'] * 10, f"AQI: {metrics['air_quality_details']['aqi']}, PM2.5: {metrics['air_quality_details']['pm25']} µg/m³"),
-                            ('Transport', min(10, metrics['osm_metrics']['sustainable_transport']['count'] * 1.5), f"Facilities: {metrics['osm_metrics']['sustainable_transport']['count']}, Bus Stops: {metrics['osm_metrics']['sustainable_transport']['bus_stops']}"),
-                            ('Green Space', min(10, metrics['osm_metrics']['green_space']['count'] * 2), f"Parks: {metrics['osm_metrics']['green_space']['count']}"),
-                            ('Water', metrics['water_availability'] * 10, ''),
-                            ('Waste', metrics['waste_management'] * 10, '')
-                        ]
+                    st.markdown("</div></div>", unsafe_allow_html=True)
 
-                        for name, score, details in metrics_display:
-                            st.markdown(f"""
-                                <div style='background-color: #2C2C2C; padding: 1rem; border-radius: 10px; text-align: center; margin-bottom: 1rem;'>
-                                    <p style='color: #888; margin: 0;'>{name}</p>
-                                    <h4 style='color: #fff; margin: 0.5rem 0;'>{score:.1f}/10</h4>
-                                    <p style='color: #888; margin: 0;'>{details}</p>
-                                    <p style='color: #888; margin: 0;'>{get_rating(score)}</p>
-                                </div>
-                            """, unsafe_allow_html=True)
+                with detail_col2:
+                    # Price Distribution Plot
+                    fig = create_price_distribution(prediction, area_prices)
+                    fig.update_layout(
+                        template="plotly_dark",
+                        plot_bgcolor='#1E1E1E',
+                        paper_bgcolor='#1E1E1E',
+                        title_font_size=20,
+                        title_font_color='#FF9933',
+                        showlegend=True,
+                        legend_font_color='#ffffff',
+                        xaxis_title_font_color='#ffffff',
+                        yaxis_title_font_color='#ffffff',
+                        xaxis_tickfont_color='#ffffff',
+                        yaxis_tickfont_color='#ffffff'
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
 
-                        st.markdown("</div></div>", unsafe_allow_html=True)
+                    # Sustainability Radar Chart
+                    radar_fig = create_sustainability_radar(metrics)
+                    st.plotly_chart(radar_fig, use_container_width=True)
 
-                    with detail_col2:
-                        # Price Distribution Plot
-                        fig = create_price_distribution(prediction, area_prices)
-                        fig.update_layout(
-                            template="plotly_dark",
-                            plot_bgcolor='#1E1E1E',
-                            paper_bgcolor='#1E1E1E',
-                            title_font_size=20,
-                            title_font_color='#FF9933',
-                            showlegend=True,
-                            legend_font_color='#ffffff',
-                            xaxis_title_font_color='#ffffff',
-                            yaxis_title_font_color='#ffffff',
-                            xaxis_tickfont_color='#ffffff',
-                            yaxis_tickfont_color='#ffffff'
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
-
-                        # Sustainability Radar Chart
-                        radar_fig = create_sustainability_radar(metrics)
-                        st.plotly_chart(radar_fig, use_container_width=True)
-
-            except Exception as e:
-                st.error(f"An error occurred: {str(e)}")
-                st.error("Please try again with different inputs or contact support if the issue persists.")
+        except Exception as e:
+            loading_overlay.empty()
+            st.error(f"An error occurred: {str(e)}")
+            st.error("Please try again with different inputs or contact support if the issue persists.")
 
 if __name__ == "__main__":
     main()
