@@ -357,7 +357,8 @@ class SustainabilityDataProcessor:
         green_space_score = min(10, metrics['osm_metrics']['green_space']['count'] * 2)
         air_quality_score = metrics['air_quality'] * 10
         water_score = metrics['water_availability'] * 10
-        waste_score = metrics['waste_management'] * 10
+        # Use the actual waste management score from our waste metrics
+        waste_score = metrics['waste']['score']
         
         # Calculate environmental score with weights
         env_weights = {
@@ -448,15 +449,24 @@ class SustainabilityDataProcessor:
             # Calculate water availability
             water_availability = self.get_water_availability(lat, lon)
             
-            # Calculate waste management
-            waste_management = self.get_waste_management_score(lat, lon)
+            # Calculate waste management metrics first
+            city_name = address.split(',')[-1].strip()
+            waste_score, waste_rating, waste_details = self.waste_metrics.calculate_waste_score(city_name)
             
-            # Combine all metrics
+            # If we got default metrics, try with the full address
+            if waste_details['municipal_efficiency'] == 5.0 and waste_details['recycling_rate'] == 30.0:
+                waste_score, waste_rating, waste_details = self.waste_metrics.calculate_waste_score(address)
+            
+            # Create the metrics dictionary with all components
             metrics = {
                 'air_quality': float(air_quality_score),
                 'air_quality_details': air_quality_details,
                 'water_availability': float(water_availability),
-                'waste_management': float(waste_management),
+                'waste': {
+                    'score': waste_score,
+                    'rating': waste_rating,
+                    'details': f"Municipal Efficiency: {waste_details['municipal_efficiency']:.1f}/10, Recycling Rate: {waste_details['recycling_rate']:.1f}%, Population Density: {waste_details['population_density']:.0f}/km², Waste Generated: {waste_details['waste_generated']:.1f} tons/day"
+                },
                 'osm_metrics': osm_metrics
             }
             
@@ -476,34 +486,20 @@ class SustainabilityDataProcessor:
                 metrics['economic_metrics'] = None
                 metrics['affordability_rating'] = 'Not Available'
             
-            print(f"Total transport facilities: {len(transport_facilities)}")
-            print(f"Total bus stops: {len(bus_stops)}")
-            
-            # Update waste management score calculation
-            # Extract city name from address (e.g., "Malviya Nagar, Jaipur" -> "Jaipur")
-            city_name = address.split(',')[-1].strip()
-            # Try with the last part of the address first
-            waste_score, waste_rating, waste_details = self.waste_metrics.calculate_waste_score(city_name)
-            
-            # If we got default metrics, try with the full address
-            if waste_details['municipal_efficiency'] == 5.0 and waste_details['recycling_rate'] == 30.0:
-                waste_score, waste_rating, waste_details = self.waste_metrics.calculate_waste_score(address)
-            
-            metrics['waste'] = {
-                'score': waste_score,
-                'rating': waste_rating,
-                'details': f"Municipal Efficiency: {waste_details['municipal_efficiency']:.1f}/10, Recycling Rate: {waste_details['recycling_rate']:.1f}%, Population Density: {waste_details['population_density']:.0f}/km², Waste Generated: {waste_details['waste_generated']:.1f} tons/day"
-            }
-            
             return metrics
             
         except Exception as e:
-            print(f"Error processing location {address}: {e}")
+            print(f"Error processing location {address}: {str(e)}")
+            # Return a complete dictionary with default values
             return {
                 'air_quality': 0.0,
                 'air_quality_details': {'aqi': 0, 'pm25': 0, 'unit': 'µg/m³', 'last_updated': None, 'location': None},
                 'water_availability': 0.0,
-                'waste_management': 0.0,
+                'waste': {
+                    'score': 5.0,
+                    'rating': 'Fair',
+                    'details': 'Municipal Efficiency: 5.0/10, Recycling Rate: 30.0%, Population Density: 10000/km², Waste Generated: 500.0 tons/day'
+                },
                 'osm_metrics': {'green_space': {'count': 0}, 'sustainable_transport': {'count': 0}},
                 'sustainability_score': 0.0,
                 'economic_metrics': None,

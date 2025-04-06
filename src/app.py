@@ -249,13 +249,13 @@ def create_sustainability_radar(metrics: Dict) -> go.Figure:
         'Waste Management'
     ]
     
-    # Get the values for each category
+    # Get the values for each category (normalized to 100)
     values = [
-        metrics['osm_metrics']['sustainable_transport']['count'] * 5,  # Normalize to 100
-        metrics['osm_metrics']['green_space']['count'] * 10,  # Normalize to 100
-        metrics['air_quality'] * 100,
-        metrics['water_availability'] * 100,
-        metrics['waste_management'] * 100
+        min(100, metrics['osm_metrics']['sustainable_transport']['count'] * 15),  # Normalize transport
+        min(100, metrics['osm_metrics']['green_space']['count'] * 20),  # Normalize green space
+        metrics['air_quality'] * 100,  # Air quality is already 0-1
+        metrics['water_availability'] * 100,  # Water is already 0-1
+        metrics['waste']['score'] * 10  # Waste score is 0-10, convert to 0-100
     ]
     
     # Create the radar chart
