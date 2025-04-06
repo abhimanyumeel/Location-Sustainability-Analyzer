@@ -536,7 +536,7 @@ def main():
                         ('Transport', min(10, metrics['osm_metrics']['sustainable_transport']['count'] * 1.5), f"Facilities: {metrics['osm_metrics']['sustainable_transport']['count']}, Bus Stops: {metrics['osm_metrics']['sustainable_transport']['bus_stops']}"),
                         ('Green Space', min(10, metrics['osm_metrics']['green_space']['count'] * 2), f"Parks: {metrics['osm_metrics']['green_space']['count']}"),
                         ('Water', metrics['water_availability'] * 10, ''),
-                        ('Waste', metrics['waste_management'] * 10, '')
+                        ('Waste Management', metrics['waste']['score'], metrics['waste']['details'])
                     ]
 
                     for name, score, details in metrics_display:
@@ -544,8 +544,8 @@ def main():
                             <div style='background-color: #2C2C2C; padding: 1rem; border-radius: 10px; text-align: center; margin-bottom: 1rem;'>
                                 <p style='color: #888; margin: 0; font-size: 1.2rem; font-weight: 500;'>{name}</p>
                                 <div style='color: #fff; margin: 0.5rem 0; font-size: 1.2rem; font-weight: 500;'>{score:.1f}/10</div>
-                                <p style='color: #888; margin: 0;'>{details}</p>
-                                <p style='color: #888; margin: 0;'>{get_rating(score)}</p>
+                                <p style='color: #888; margin: 0; font-size: 0.9rem;'>{details}</p>
+                                <p style='color: #888; margin: 0.5rem 0 0 0; font-size: 1rem;'>{get_rating(score)}</p>
                             </div>
                         """, unsafe_allow_html=True)
 

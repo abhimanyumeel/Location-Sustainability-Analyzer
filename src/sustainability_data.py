@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 import json
 from dotenv import load_dotenv
 from data_collection.osm_collector import OSMDataCollector
+from waste_management import WasteManagementMetrics
 
 # Load environment variables from .env file
 load_dotenv()
@@ -27,6 +28,7 @@ class SustainabilityDataProcessor:
         
         # Initialize OSM collector
         self.osm_collector = OSMDataCollector()
+        self.waste_metrics = WasteManagementMetrics()
 
     def fetch_osm_data(self, lat: float, lon: float, radius: float = 2000) -> Dict:
         """
@@ -476,6 +478,22 @@ class SustainabilityDataProcessor:
             
             print(f"Total transport facilities: {len(transport_facilities)}")
             print(f"Total bus stops: {len(bus_stops)}")
+            
+            # Update waste management score calculation
+            # Extract city name from address (e.g., "Malviya Nagar, Jaipur" -> "Jaipur")
+            city_name = address.split(',')[-1].strip()
+            # Try with the last part of the address first
+            waste_score, waste_rating, waste_details = self.waste_metrics.calculate_waste_score(city_name)
+            
+            # If we got default metrics, try with the full address
+            if waste_details['municipal_efficiency'] == 5.0 and waste_details['recycling_rate'] == 30.0:
+                waste_score, waste_rating, waste_details = self.waste_metrics.calculate_waste_score(address)
+            
+            metrics['waste'] = {
+                'score': waste_score,
+                'rating': waste_rating,
+                'details': f"Municipal Efficiency: {waste_details['municipal_efficiency']:.1f}/10, Recycling Rate: {waste_details['recycling_rate']:.1f}%, Population Density: {waste_details['population_density']:.0f}/km², Waste Generated: {waste_details['waste_generated']:.1f} tons/day"
+            }
             
             return metrics
             
